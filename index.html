@@ -26,6 +26,10 @@
         .viewer-only .generator-element { display: none; }
         .section { margin-bottom: 20px; }
         .section h2 { color: #333; }
+        .image-preview { max-width: 100%; margin: 10px 0; border: 1px solid #ddd; }
+        .image-container { margin-top: 20px; text-align: center; }
+        .image-container img { max-width: 100%; margin-bottom: 20px; }
+        .file-input { margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -40,33 +44,19 @@
             
             <div id="generator" class="tab-content active">
                 <div class="form-group">
-                    <label for="napojovy_listek">Nápojový lístek:</label>
-                    <textarea id="napojovy_listek">Pivo:
-- Pilsner Urquell 0,5l - 55 Kč
-- Radegast 12° 0,5l - 50 Kč
-- Kozel tmavý 0,5l - 45 Kč
-
-Nealko:
-- Voda (perlivá/neperlivá) 0,5l - 30 Kč
-- Cola 0,5l - 45 Kč
-- Džus 0,3l - 40 Kč</textarea>
+                    <label for="napojovy_listek_image">Obrázek nápojového lístku:</label>
+                    <input type="file" id="napojovy_listek_image" class="file-input" accept="image/*" onchange="previewImage('napojovy_listek_image', 'napojovy_listek_preview')">
+                    <div>
+                        <img id="napojovy_listek_preview" class="image-preview" style="display:none;">
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="lineup">Lineup festivalu:</label>
-                    <textarea id="lineup">Pátek:
-15:00 - 16:00: DJ Franta
-16:30 - 17:30: Local Heroes
-18:00 - 19:30: Reggae Dub
-20:00 - 21:30: Rock Stars
-22:00 - 00:00: Headliner
-
-Sobota:
-14:00 - 15:00: Začínající kapela
-15:30 - 16:30: Folková skupina
-17:00 - 18:30: Indie Rock
-19:00 - 20:30: Elektronika
-21:00 - 23:00: Hlavní hvězda</textarea>
+                    <label for="lineup_image">Obrázek lineup festivalu:</label>
+                    <input type="file" id="lineup_image" class="file-input" accept="image/*" onchange="previewImage('lineup_image', 'lineup_preview')">
+                    <div>
+                        <img id="lineup_preview" class="image-preview" style="display:none;">
+                    </div>
                 </div>
                 
                 <button onclick="generateQR()">Generovat QR kód</button>
@@ -81,12 +71,14 @@ Sobota:
                 <div class="instructions">
                     <h2>Návod k použití:</h2>
                     <ol>
-                        <li>Vyplňte nápojový lístek a lineup festivalu</li>
+                        <li>Nahrajte obrázek nápojového lístku</li>
+                        <li>Nahrajte obrázek lineup festivalu</li>
                         <li>Klikněte na tlačítko "Generovat QR kód"</li>
                         <li>Stáhněte si vygenerovaný QR kód</li>
                         <li>Vytiskněte QR kód a umístěte ho do propagačních materiálů</li>
                         <li>Při naskenování QR kódu se uživateli zobrazí informace</li>
                     </ol>
+                    <p><strong>Poznámka:</strong> Pro nejlepší výsledky používejte obrázky o velikosti do 500KB. Větší obrázky mohou způsobit problémy při načítání QR kódu.</p>
                 </div>
             </div>
             
@@ -105,6 +97,23 @@ Sobota:
     </div>
     
     <script>
+        // Náhled obrázku po výběru souboru
+        function previewImage(inputId, previewId) {
+            var fileInput = document.getElementById(inputId);
+            var preview = document.getElementById(previewId);
+            
+            if (fileInput.files && fileInput.files[0]) {
+                var reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                }
+                
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+        
         // Otevření záložky
         function openTab(tabName) {
             var i, tabContent, tabButtons;
@@ -133,13 +142,19 @@ Sobota:
         
         // Funkce pro generování QR kódu
         function generateQR() {
-            var napojovyListek = document.getElementById("napojovy_listek").value;
-            var lineup = document.getElementById("lineup").value;
+            var napojovyListekPreview = document.getElementById("napojovy_listek_preview");
+            var lineupPreview = document.getElementById("lineup_preview");
+            
+            // Kontrola, zda byly nahrány oba obrázky
+            if (napojovyListekPreview.style.display === "none" || lineupPreview.style.display === "none") {
+                alert("Prosím, nahrajte oba obrázky před generováním QR kódu.");
+                return;
+            }
             
             // Vytvoření objektu s daty
             var data = {
-                napojovy_listek: napojovyListek,
-                lineup: lineup
+                napojovy_listek_image: napojovyListekPreview.src,
+                lineup_image: lineupPreview.src
             };
             
             // Komprese dat
@@ -188,24 +203,24 @@ Sobota:
                     var jsonData = LZString.decompressFromEncodedURIComponent(compressedData);
                     var data = JSON.parse(jsonData);
                     
-                    // Zobrazení dat na stránce v režimu viewer
+                    // Zobrazení dat na stránce v režimu viewer - pouze obrázky
                     document.getElementById("mainContent").innerHTML = `
-                        <div class="section">
+                        <div class="image-container">
                             <h2>Nápojový lístek</h2>
-                            <div class="menu">
-                                ${data.napojovy_listek.replace(/\n/g, '<br>')}
-                            </div>
-                        </div>
-                        
-                        <div class="section">
+                            <img src="${data.napojovy_listek_image}" alt="Nápojový lístek">
+                            
                             <h2>Lineup festivalu</h2>
-                            <div class="lineup">
-                                ${data.lineup.replace(/\n/g, '<br>')}
-                            </div>
+                            <img src="${data.lineup_image}" alt="Lineup festivalu">
                         </div>
                     `;
                 } catch (e) {
                     console.error("Chyba při parsování dat:", e);
+                    document.getElementById("mainContent").innerHTML = `
+                        <div class="error">
+                            <h2>Chyba při načítání dat</h2>
+                            <p>Omlouváme se, ale došlo k chybě při načítání informací. Kontaktujte prosím organizátory festivalu.</p>
+                        </div>
+                    `;
                 }
             }
         }
