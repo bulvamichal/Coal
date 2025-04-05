@@ -7,34 +7,101 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background-color: #000000;
+            color: #ffffff;
+        }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        input[type="text"] { 
+            width: 100%; 
+            padding: 8px; 
+            box-sizing: border-box;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+        }
         .qr-result { margin-top: 30px; text-align: center; }
         #qrcode { margin: 20px auto; }
         #qrcode img { margin: 0 auto; }
-        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
-        .instructions { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; }
+        button { 
+            background-color: #4CAF50; 
+            color: white; 
+            padding: 10px 15px; 
+            border: none; 
+            cursor: pointer; 
+        }
+        .instructions { 
+            margin-top: 30px; 
+            border-top: 1px solid #444; 
+            padding-top: 20px; 
+        }
         .tab-container { margin-top: 20px; }
         .tab-buttons { display: flex; }
-        .tab-button { padding: 10px 15px; background-color: #f1f1f1; border: none; cursor: pointer; margin-right: 2px; }
+        .tab-button { 
+            padding: 10px 15px; 
+            background-color: #333; 
+            color: #fff;
+            border: none; 
+            cursor: pointer; 
+            margin-right: 2px; 
+        }
         .tab-button.active { background-color: #4CAF50; color: white; }
-        .tab-content { display: none; padding: 20px; border: 1px solid #ddd; }
+        .tab-content { 
+            display: none; 
+            padding: 20px; 
+            border: 1px solid #444;
+            background-color: #111;
+        }
         .tab-content.active { display: block; }
-        .download-link { display: inline-block; margin-top: 10px; padding: 8px 15px; background-color: #007BFF; color: white; text-decoration: none; }
+        .download-link { 
+            display: inline-block; 
+            margin-top: 10px; 
+            padding: 8px 15px; 
+            background-color: #007BFF; 
+            color: white; 
+            text-decoration: none; 
+        }
         .viewer-only .generator-element { display: none; }
         .section { margin-bottom: 20px; }
-        .section h2 { color: #333; }
-        .image-preview { max-width: 300px; max-height: 200px; margin: 10px 0; border: 1px solid #ddd; }
+        .section h2 { color: #fff; }
+        .image-preview { 
+            max-width: 300px; 
+            max-height: 200px; 
+            margin: 10px 0; 
+            border: 1px solid #444; 
+        }
         .image-container { margin-top: 20px; text-align: center; }
         .image-container img { max-width: 100%; margin-bottom: 20px; }
         .file-input { margin-bottom: 10px; }
-        .warning { background-color: #fff3cd; padding: 10px; margin: 10px 0; border: 1px solid #ffeeba; }
-        .error { background-color: #f8d7da; padding: 10px; margin: 10px 0; border: 1px solid #f5c6cb; }
+        .warning { 
+            background-color: #332b00; 
+            color: #ffeb9d;
+            padding: 10px; 
+            margin: 10px 0; 
+            border: 1px solid #665500; 
+        }
+        .error { 
+            background-color: #350000; 
+            color: #ffb3b3;
+            padding: 10px; 
+            margin: 10px 0; 
+            border: 1px solid #660000; 
+        }
         .status { margin-top: 10px; padding: 5px; border-radius: 3px; }
-        .options { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
-        .github-instructions { background-color: #e8f4f8; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .options { margin-top: 15px; border-top: 1px solid #444; padding-top: 15px; }
+        .github-instructions { 
+            background-color: #001a22; 
+            color: #b3e0f2;
+            padding: 15px; 
+            margin-bottom: 20px; 
+            border-radius: 5px; 
+        }
+        h1, h2, h3 { color: #ffffff; }
     </style>
 </head>
 <body>
