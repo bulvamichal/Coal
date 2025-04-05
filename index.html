@@ -110,6 +110,7 @@
                     lineup_image: lineupPreview.src || '' // Zajištění, že proměnná není undefined
                 };
 
+                // Pokud nejsou obrázky, vyhodí to chybu
                 if (!data.napojovy_listek_image || !data.lineup_image) {
                     throw new Error('Chybí obrázek nápojového lístku nebo lineup festivalu.');
                 }
