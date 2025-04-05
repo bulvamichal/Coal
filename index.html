@@ -96,7 +96,7 @@
             var statusElement = document.getElementById("generateStatus");
 
             // Kontrola, zda byly nahrány oba obrázky
-            if (napojovyListekPreview.style.display === "none" || lineupPreview.style.display === "none") {
+            if (!napojovyListekPreview.src || !lineupPreview.src) {
                 statusElement.innerHTML = `<div class="error">Prosím, nahrajte oba obrázky před generováním QR kódu.</div>`;
                 return;
             }
