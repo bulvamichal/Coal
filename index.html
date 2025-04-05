@@ -7,20 +7,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
-        .status {
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        .error {
-            color: red;
-        }
-        .warning {
-            color: orange;
-        }
-        #downloadContainer {
-            display: none;
-            margin-top: 10px;
-        }
+        .status { font-size: 16px; margin-top: 10px; }
+        .error { color: red; }
+        .warning { color: orange; }
+        #downloadContainer { display: none; margin-top: 10px; }
         #downloadLink {
             padding: 10px;
             background-color: #4CAF50;
@@ -70,11 +60,10 @@
 
     <script>
         function previewImage(inputId, previewId) {
-            var file = document.getElementById(inputId).files[0];
-            var reader = new FileReader();
-
+            const file = document.getElementById(inputId).files[0];
+            const reader = new FileReader();
             reader.onload = function(e) {
-                var preview = document.getElementById(previewId);
+                const preview = document.getElementById(previewId);
                 preview.src = e.target.result;
                 preview.style.display = "block";
             };
@@ -85,86 +74,65 @@
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
             const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         }
 
         function generateQR() {
-            var napojovyListekPreview = document.getElementById("napojovy_listek_preview");
-            var lineupPreview = document.getElementById("lineup_preview");
-            var statusElement = document.getElementById("generateStatus");
+            const napojovyListek = document.getElementById("napojovy_listek_preview").src;
+            const lineup = document.getElementById("lineup_preview").src;
+            const statusElement = document.getElementById("generateStatus");
+            statusElement.innerHTML = "";
 
-            // Kontrola, zda byly nahrány oba obrázky
-            if (!napojovyListekPreview.src || !lineupPreview.src) {
+            if (!napojovyListek || !lineup || napojovyListek === window.location.href || lineup === window.location.href) {
                 statusElement.innerHTML = `<div class="error">Prosím, nahrajte oba obrázky před generováním QR kódu.</div>`;
                 return;
             }
 
-            statusElement.innerHTML = `<div class="status">Generuji QR kód, prosím čekejte...</div>`;
-
             try {
-                // Vytvoření objektu s daty
-                var data = {
-                    napojovy_listek_image: napojovyListekPreview.src || '', // Zajištění, že proměnná není undefined
-                    lineup_image: lineupPreview.src || '' // Zajištění, že proměnná není undefined
+                const data = {
+                    napojovy_listek_image: napojovyListek,
+                    lineup_image: lineup
                 };
 
-                // Pokud nejsou obrázky, vyhodí to chybu
-                if (!data.napojovy_listek_image || !data.lineup_image) {
-                    throw new Error('Chybí obrázek nápojového lístku nebo lineup festivalu.');
-                }
+                const jsonData = JSON.stringify(data);
+                const compressedData = LZString.compressToEncodedURIComponent(jsonData);
 
-                console.log("Velikost dat před kompresí:", JSON.stringify(data).length);
+                console.log("Velikost JSON:", jsonData.length, "znaků");
+                console.log("Velikost po kompresi:", compressedData.length, "znaků");
 
-                // Komprese dat
-                var jsonData = JSON.stringify(data);
-                var compressedData = LZString.compressToEncodedURIComponent(jsonData);
-
-                console.log("Velikost dat po kompresi:", compressedData.length);
-
-                // Varování, pokud jsou data příliš velká
                 if (compressedData.length > 2000) {
-                    statusElement.innerHTML += `<div class="warning">Upozornění: QR kód obsahuje velké množství dat (${formatBytes(compressedData.length)}). Mohou nastat problémy při skenování.</div>`;
-                } else {
-                    statusElement.innerHTML += `<div class="status">Velikost dat QR kódu: ${formatBytes(compressedData.length)}</div>`;
+                    statusElement.innerHTML += `<div class="warning">Upozornění: QR kód obsahuje příliš mnoho dat (${compressedData.length} znaků). Může být nečitelný.</div>`;
                 }
 
-                // Vytvoření URL s daty
-                var baseUrl = window.location.href.split('?')[0]; // Získání základní URL bez parametrů
-                var url = baseUrl + "?data=" + compressedData;
+                const baseUrl = window.location.href.split('?')[0];
+                const url = baseUrl + "?data=" + compressedData;
 
-                // Nastavení velikosti QR kódu
-                var size = 256;
-
-                // Vymazání existujícího QR kódu
+                const size = 256;
                 document.getElementById("qrcode").innerHTML = "";
 
-                // Vytvoření nového QR kódu
-                var qrcode = new QRCode(document.getElementById("qrcode"), {
+                new QRCode(document.getElementById("qrcode"), {
                     text: url,
                     width: size,
                     height: size,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H // Nejvyšší úroveň korekce chyb
+                    correctLevel: QRCode.CorrectLevel.H
                 });
 
-                // Zpřístupnění tlačítka pro stažení
-                setTimeout(function() {
-                    var qrImage = document.querySelector("#qrcode img");
+                setTimeout(() => {
+                    const qrImage = document.querySelector("#qrcode img");
                     if (qrImage) {
-                        var downloadLink = document.getElementById("downloadLink");
-                        downloadLink.href = qrImage.src;
+                        document.getElementById("downloadLink").href = qrImage.src;
                         document.getElementById("downloadContainer").style.display = "block";
                         statusElement.innerHTML += `<div class="status" style="color: green;">QR kód byl úspěšně vygenerován!</div>`;
                     } else {
-                        statusElement.innerHTML += `<div class="error">Nepodařilo se vygenerovat QR kód. Zkuste menší obrázky.</div>`;
+                        statusElement.innerHTML += `<div class="error">Nepodařilo se vygenerovat QR kód.</div>`;
                     }
                 }, 500);
-
             } catch (e) {
-                console.error("Chyba při generování QR kódu:", e);
+                console.error("Chyba:", e);
                 statusElement.innerHTML = `<div class="error">Došlo k chybě při generování QR kódu: ${e.message}</div>`;
             }
         }
