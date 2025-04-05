@@ -102,6 +102,20 @@
             border-radius: 5px; 
         }
         h1, h2, h3 { color: #ffffff; }
+        .section-title {
+            background-color: #222;
+            padding: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+        .preview-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .preview-container {
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -125,21 +139,60 @@
                     </ol>
                 </div>
                 
+                <!-- Drinks -->
+                <div class="section-title">
+                    <h3>Drinks</h3>
+                </div>
                 <div class="form-group">
-                    <label for="napojovy_listek_url">URL adresa obrázku nápojového lístku:</label>
-                    <input type="text" id="napojovy_listek_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/napojovy-listek.jpg">
+                    <label for="drinks_url">URL adresa obrázku nápojů:</label>
+                    <input type="text" id="drinks_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/drinks.jpg">
                     <div>
-                        <button onclick="previewImage('napojovy_listek_url', 'napojovy_listek_preview')" class="preview-button">Náhled</button>
-                        <img id="napojovy_listek_preview" class="image-preview" style="display:none;">
+                        <button onclick="previewImage('drinks_url', 'drinks_preview')" class="preview-button">Náhled</button>
+                        <img id="drinks_preview" class="image-preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <!-- Lineup - pátek -->
+                <div class="section-title">
+                    <h3>Lineup - pátek</h3>
+                </div>
+                <div class="form-group">
+                    <label for="lineup_friday_1_url">URL adresa obrázku 1 (pátek):</label>
+                    <input type="text" id="lineup_friday_1_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-friday-1.jpg">
+                    <div>
+                        <button onclick="previewImage('lineup_friday_1_url', 'lineup_friday_1_preview')" class="preview-button">Náhled</button>
+                        <img id="lineup_friday_1_preview" class="image-preview" style="display:none;">
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="lineup_url">URL adresa obrázku lineup festivalu:</label>
-                    <input type="text" id="lineup_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup.jpg">
+                    <label for="lineup_friday_2_url">URL adresa obrázku 2 (pátek):</label>
+                    <input type="text" id="lineup_friday_2_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-friday-2.jpg">
                     <div>
-                        <button onclick="previewImage('lineup_url', 'lineup_preview')" class="preview-button">Náhled</button>
-                        <img id="lineup_preview" class="image-preview" style="display:none;">
+                        <button onclick="previewImage('lineup_friday_2_url', 'lineup_friday_2_preview')" class="preview-button">Náhled</button>
+                        <img id="lineup_friday_2_preview" class="image-preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <!-- Lineup - sobota -->
+                <div class="section-title">
+                    <h3>Lineup - sobota</h3>
+                </div>
+                <div class="form-group">
+                    <label for="lineup_saturday_1_url">URL adresa obrázku 1 (sobota):</label>
+                    <input type="text" id="lineup_saturday_1_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-saturday-1.jpg">
+                    <div>
+                        <button onclick="previewImage('lineup_saturday_1_url', 'lineup_saturday_1_preview')" class="preview-button">Náhled</button>
+                        <img id="lineup_saturday_1_preview" class="image-preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lineup_saturday_2_url">URL adresa obrázku 2 (sobota):</label>
+                    <input type="text" id="lineup_saturday_2_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-saturday-2.jpg">
+                    <div>
+                        <button onclick="previewImage('lineup_saturday_2_url', 'lineup_saturday_2_preview')" class="preview-button">Náhled</button>
+                        <img id="lineup_saturday_2_preview" class="image-preview" style="display:none;">
                     </div>
                 </div>
                 
@@ -238,20 +291,27 @@
         
         // Funkce pro generování QR kódu s odkazy
         function generateQR() {
-            var napojovyListekUrl = document.getElementById("napojovy_listek_url").value.trim();
-            var lineupUrl = document.getElementById("lineup_url").value.trim();
+            var drinksUrl = document.getElementById("drinks_url").value.trim();
+            var lineupFriday1Url = document.getElementById("lineup_friday_1_url").value.trim();
+            var lineupFriday2Url = document.getElementById("lineup_friday_2_url").value.trim();
+            var lineupSaturday1Url = document.getElementById("lineup_saturday_1_url").value.trim();
+            var lineupSaturday2Url = document.getElementById("lineup_saturday_2_url").value.trim();
             var statusElement = document.getElementById("generateStatus");
             
-            // Kontrola, zda byly zadány obě URL adresy
-            if (napojovyListekUrl === '' || lineupUrl === '') {
-                statusElement.innerHTML = `<div class="error">Prosím, zadejte URL adresy obou obrázků.</div>`;
+            // Kontrola, zda byly zadány všechny URL adresy
+            if (drinksUrl === '' || lineupFriday1Url === '' || lineupFriday2Url === '' || 
+                lineupSaturday1Url === '' || lineupSaturday2Url === '') {
+                statusElement.innerHTML = `<div class="error">Prosím, zadejte URL adresy všech obrázků.</div>`;
                 return;
             }
             
-            // Kontrola platnosti URL adres
-            if (!isValidImageUrl(napojovyListekUrl) || !isValidImageUrl(lineupUrl)) {
-                statusElement.innerHTML = `<div class="error">Zadejte platné URL adresy obrázků.</div>`;
-                return;
+            // Kontrola platnosti všech URL adres
+            var allUrls = [drinksUrl, lineupFriday1Url, lineupFriday2Url, lineupSaturday1Url, lineupSaturday2Url];
+            for (var i = 0; i < allUrls.length; i++) {
+                if (!isValidImageUrl(allUrls[i])) {
+                    statusElement.innerHTML = `<div class="error">Zadejte platné URL adresy obrázků.</div>`;
+                    return;
+                }
             }
             
             statusElement.innerHTML = `<div class="status">Generuji QR kód, prosím čekejte...</div>`;
@@ -259,8 +319,11 @@
             try {
                 // Vytvoření objektu s daty - pouze odkazy místo celých obrázků
                 var data = {
-                    napojovy_listek_url: napojovyListekUrl,
-                    lineup_url: lineupUrl
+                    drinks_url: drinksUrl,
+                    lineup_friday_1_url: lineupFriday1Url,
+                    lineup_friday_2_url: lineupFriday2Url,
+                    lineup_saturday_1_url: lineupSaturday1Url,
+                    lineup_saturday_2_url: lineupSaturday2Url
                 };
                 
                 // Komprese dat
@@ -324,14 +387,19 @@
                     var jsonData = LZString.decompressFromEncodedURIComponent(compressedData);
                     var data = JSON.parse(jsonData);
                     
-                    // Zobrazení dat na stránce v režimu viewer - nyní načítáme odkazy na obrázky
+                    // Zobrazení dat na stránce v režimu viewer - načítáme odkazy na obrázky
                     document.getElementById("mainContent").innerHTML = `
                         <div class="image-container">
-                            <h2>Nápojový lístek</h2>
-                            <img src="${data.napojovy_listek_url}" alt="Nápojový lístek" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek nápojového lístku.');">
+                            <h2>Drinks</h2>
+                            <img src="${data.drinks_url}" alt="Nápojový lístek" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek s nápoji.');">
                             
-                            <h2>Lineup festivalu</h2>
-                            <img src="${data.lineup_url}" alt="Lineup festivalu" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup festivalu.');">
+                            <h2>Lineup - pátek</h2>
+                            <img src="${data.lineup_friday_1_url}" alt="Lineup pátek 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 1.');">
+                            <img src="${data.lineup_friday_2_url}" alt="Lineup pátek 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 2.');">
+                            
+                            <h2>Lineup - sobota</h2>
+                            <img src="${data.lineup_saturday_1_url}" alt="Lineup sobota 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 1.');">
+                            <img src="${data.lineup_saturday_2_url}" alt="Lineup sobota 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 2.');">
                         </div>
                     `;
                 } catch (e) {
