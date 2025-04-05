@@ -1,67 +1,62 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <title>Zobrazení dat z QR kódu</title>
-    <style>
-        img {
-            max-width: 400px;
-            margin: 10px;
-            border: 1px solid #ccc;
-            padding: 5px;
-        }
-        .status {
-            margin-top: 20px;
-            font-size: 16px;
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Zobrazení dat z QR kódu</title>
+  <style>
+    img {
+      max-width: 400px;
+      margin: 10px;
+      border: 1px solid #ccc;
+      padding: 5px;
+    }
+    .status {
+      font-size: 16px;
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
 </head>
 <body>
-    <h1>Zobrazení obrázků z QR kódu</h1>
+  <h1>Zobrazení obrázků z QR kódu</h1>
+  <div id="output"></div>
 
-    <div id="output"></div>
+  <script>
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
 
-    <script>
-        function getQueryParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
+    function showImages(data) {
+      const container = document.getElementById("output");
 
-        function showImages(data) {
-            const container = document.getElementById("output");
+      if (!data.napojovy_listek_url || !data.lineup_url) {
+        container.innerHTML = `<p class="error">Chybí některá z URL!</p>`;
+        return;
+      }
 
-            if (!data.napojovy_listek_url || !data.lineup_url) {
-                container.innerHTML = `<div class="error">Data jsou neúplná nebo neplatná.</div>`;
-                return;
-            }
+      container.innerHTML = `
+        <h3>Nápojový lístek:</h3>
+        <img src="${data.napojovy_listek_url}" alt="Nápojový lístek" />
+        <h3>Lineup festivalu:</h3>
+        <img src="${data.lineup_url}" alt="Lineup festivalu" />
+        <p class="status">Obrázky úspěšně načteny.</p>
+      `;
+    }
 
-            container.innerHTML = `
-                <h3>Nápojový lístek:</h3>
-                <img src="${data.napojovy_listek_url}" alt="Nápojový lístek">
+    try {
+      const encoded = getQueryParam("data");
+      if (!encoded) throw new Error("Chybí data v URL");
 
-                <h3>Lineup festivalu:</h3>
-                <img src="${data.lineup_url}" alt="Lineup festivalu">
+      const json = decodeURIComponent(encoded);
+      const data = JSON.parse(json);
 
-                <div class="status">Data byla úspěšně načtena z QR kódu.</div>
-            `;
-        }
-
-        // Načti a dekóduj data z URL
-        try {
-            const encodedData = getQueryParam("data");
-            if (!encodedData) throw new Error("Žádná data v URL");
-
-            const json = decodeURIComponent(encodedData);
-            const parsed = JSON.parse(json);
-
-            showImages(parsed);
-        } catch (e) {
-            document.getElementById("output").innerHTML = `<div class="error">Chyba při načítání dat: ${e.message}</div>`;
-        }
-    </script>
+      showImages(data);
+    } catch (e) {
+      document.getElementById("output").innerHTML = `<p class="error">Chyba: ${e.message}</p>`;
+    }
+  </script>
 </body>
 </html>
