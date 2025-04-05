@@ -2,22 +2,9 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generátor QR kódu</title>
+    <title>QR s odkazy na Google Disk</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
-        .status { font-size: 16px; margin-top: 10px; }
-        .error { color: red; }
-        .warning { color: orange; }
-        #downloadContainer { display: none; margin-top: 10px; }
-        #downloadLink {
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
         #qrcode img {
             border: 1px solid #ccc;
             padding: 10px;
@@ -25,116 +12,58 @@
     </style>
 </head>
 <body>
-    <h1>Generování QR kódu</h1>
+    <h1>QR kód s odkazy na Google Disk</h1>
 
-    <!-- Nahrání obrázků -->
-    <div>
-        <label for="napojovy_listek">Nahrát obrázek nápojového lístku:</label>
-        <input type="file" id="napojovy_listek" accept="image/*" onchange="previewImage('napojovy_listek', 'napojovy_listek_preview')">
-    </div>
-    <div>
-        <label for="lineup">Nahrát obrázek lineup festivalu:</label>
-        <input type="file" id="lineup" accept="image/*" onchange="previewImage('lineup', 'lineup_preview')">
-    </div>
+    <label for="g1">Google Disk - nápojový lístek (ID nebo celé URL):</label>
+    <input type="text" id="g1" style="width: 100%;" placeholder="1abcDEFghiJKlmnOpqRSTuvwXYZ"><br><br>
 
-    <!-- Náhledy obrázků -->
-    <div id="previewContainer">
-        <h3>Náhled obrázků:</h3>
-        <img id="napojovy_listek_preview" style="display: none; width: 200px;" alt="Náhled nápojového lístku">
-        <img id="lineup_preview" style="display: none; width: 200px;" alt="Náhled lineup festivalu">
-    </div>
+    <label for="g2">Google Disk - lineup festivalu:</label>
+    <input type="text" id="g2" style="width: 100%;" placeholder="1def456UVWxyz789LMNOPqrs"><br><br>
 
-    <!-- Status -->
-    <div id="generateStatus"></div>
-
-    <!-- Tlačítko pro generování QR kódu -->
     <button onclick="generateQR()">Generovat QR kód</button>
 
-    <!-- QR kód -->
-    <div id="qrcode"></div>
-
-    <!-- Odkaz pro stažení -->
-    <div id="downloadContainer">
-        <a id="downloadLink" download="qr_code.png">Stáhnout QR kód</a>
-    </div>
+    <div id="qrcode" style="margin-top: 20px;"></div>
 
     <script>
-        function previewImage(inputId, previewId) {
-            const file = document.getElementById(inputId).files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.getElementById(previewId);
-                preview.src = e.target.result;
-                preview.style.display = "block";
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        function extractId(input) {
+            // Pokud zadal celé URL, vytáhneme ID
+            const match = input.match(/[-\w]{25,}/);
+            return match ? match[0] : input;
         }
 
         function generateQR() {
-            const napojovyListek = document.getElementById("napojovy_listek_preview").src;
-            const lineup = document.getElementById("lineup_preview").src;
-            const statusElement = document.getElementById("generateStatus");
-            statusElement.innerHTML = "";
+            const raw1 = document.getElementById('g1').value.trim();
+            const raw2 = document.getElementById('g2').value.trim();
 
-            if (!napojovyListek || !lineup || napojovyListek === window.location.href || lineup === window.location.href) {
-                statusElement.innerHTML = `<div class="error">Prosím, nahrajte oba obrázky před generováním QR kódu.</div>`;
+            const id1 = extractId(raw1);
+            const id2 = extractId(raw2);
+
+            if (!id1 || !id2) {
+                alert("Zadej obě ID nebo URL!");
                 return;
             }
 
-            try {
-                const data = {
-                    napojovy_listek_image: napojovyListek,
-                    lineup_image: lineup
-                };
+            const url1 = `https://drive.google.com/uc?export=view&id=${id1}`;
+            const url2 = `https://drive.google.com/uc?export=view&id=${id2}`;
 
-                const jsonData = JSON.stringify(data);
-                const compressedData = LZString.compressToEncodedURIComponent(jsonData);
+            const data = {
+                napojovy_listek_url: url1,
+                lineup_url: url2
+            };
 
-                console.log("Velikost JSON:", jsonData.length, "znaků");
-                console.log("Velikost po kompresi:", compressedData.length, "znaků");
+            const json = JSON.stringify(data);
+            const encoded = encodeURIComponent(json);
+            const fullUrl = window.location.origin + window.location.pathname + "?data=" + encoded;
 
-                if (compressedData.length > 2000) {
-                    statusElement.innerHTML += `<div class="warning">Upozornění: QR kód obsahuje příliš mnoho dat (${compressedData.length} znaků). Může být nečitelný.</div>`;
-                }
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
+                text: fullUrl,
+                width: 256,
+                height: 256,
+                correctLevel: QRCode.CorrectLevel.H
+            });
 
-                const baseUrl = window.location.href.split('?')[0];
-                const url = baseUrl + "?data=" + compressedData;
-
-                const size = 256;
-                document.getElementById("qrcode").innerHTML = "";
-
-                new QRCode(document.getElementById("qrcode"), {
-                    text: url,
-                    width: size,
-                    height: size,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-
-                setTimeout(() => {
-                    const qrImage = document.querySelector("#qrcode img");
-                    if (qrImage) {
-                        document.getElementById("downloadLink").href = qrImage.src;
-                        document.getElementById("downloadContainer").style.display = "block";
-                        statusElement.innerHTML += `<div class="status" style="color: green;">QR kód byl úspěšně vygenerován!</div>`;
-                    } else {
-                        statusElement.innerHTML += `<div class="error">Nepodařilo se vygenerovat QR kód.</div>`;
-                    }
-                }, 500);
-            } catch (e) {
-                console.error("Chyba:", e);
-                statusElement.innerHTML = `<div class="error">Došlo k chybě při generování QR kódu: ${e.message}</div>`;
-            }
+            console.log("QR obsahuje:", fullUrl);
         }
     </script>
 </body>
