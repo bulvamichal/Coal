@@ -26,10 +26,14 @@
         .viewer-only .generator-element { display: none; }
         .section { margin-bottom: 20px; }
         .section h2 { color: #333; }
-        .image-preview { max-width: 100%; margin: 10px 0; border: 1px solid #ddd; }
+        .image-preview { max-width: 300px; max-height: 200px; margin: 10px 0; border: 1px solid #ddd; }
         .image-container { margin-top: 20px; text-align: center; }
         .image-container img { max-width: 100%; margin-bottom: 20px; }
         .file-input { margin-bottom: 10px; }
+        .warning { background-color: #fff3cd; padding: 10px; margin: 10px 0; border: 1px solid #ffeeba; }
+        .error { background-color: #f8d7da; padding: 10px; margin: 10px 0; border: 1px solid #f5c6cb; }
+        .status { margin-top: 10px; padding: 5px; border-radius: 3px; }
+        .options { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     </style>
 </head>
 <body>
@@ -43,11 +47,16 @@
             </div>
             
             <div id="generator" class="tab-content active">
+                <div id="sizeWarning" class="warning" style="display:none;">
+                    <p><strong>Upozornění:</strong> Obrázky jsou příliš velké, což může způsobit problémy při generování QR kódu. Doporučujeme zmenšit obrázky nebo použít komprimovanější formát.</p>
+                </div>
+                
                 <div class="form-group">
                     <label for="napojovy_listek_image">Obrázek nápojového lístku:</label>
                     <input type="file" id="napojovy_listek_image" class="file-input" accept="image/*" onchange="previewImage('napojovy_listek_image', 'napojovy_listek_preview')">
                     <div>
                         <img id="napojovy_listek_preview" class="image-preview" style="display:none;">
+                        <div id="napojovy_listek_status" class="status"></div>
                     </div>
                 </div>
                 
@@ -56,10 +65,19 @@
                     <input type="file" id="lineup_image" class="file-input" accept="image/*" onchange="previewImage('lineup_image', 'lineup_preview')">
                     <div>
                         <img id="lineup_preview" class="image-preview" style="display:none;">
+                        <div id="lineup_status" class="status"></div>
                     </div>
                 </div>
                 
+                <div class="options">
+                    <label>
+                        <input type="checkbox" id="compressImages" checked> 
+                        Automaticky komprimovat obrázky (doporučeno)
+                    </label>
+                </div>
+                
                 <button onclick="generateQR()">Generovat QR kód</button>
+                <div id="generateStatus"></div>
                 
                 <div class="qr-result">
                     <div id="qrcode"></div>
@@ -78,7 +96,7 @@
                         <li>Vytiskněte QR kód a umístěte ho do propagačních materiálů</li>
                         <li>Při naskenování QR kódu se uživateli zobrazí informace</li>
                     </ol>
-                    <p><strong>Poznámka:</strong> Pro nejlepší výsledky používejte obrázky o velikosti do 500KB. Větší obrázky mohou způsobit problémy při načítání QR kódu.</p>
+                    <p><strong>Poznámka:</strong> Pro nejlepší výsledky používejte obrázky o velikosti do 200KB. Větší obrázky mohou způsobit problémy při načítání QR kódu.</p>
                 </div>
             </div>
             
@@ -97,20 +115,142 @@
     </div>
     
     <script>
+        // Globální proměnné pro sledování velikosti obrázků
+        var totalImageSize = 0;
+        var MAX_RECOMMENDED_SIZE = 200 * 1024; // 200KB
+        
+        // Funkce pro kompresi obrázku
+        function compressImage(src, quality, maxWidth, maxHeight) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Výpočet poměru pro změnu velikosti
+                    if (width > maxWidth) {
+                        height = height * (maxWidth / width);
+                        width = maxWidth;
+                    }
+                    if (height > maxHeight) {
+                        width = width * (maxHeight / height);
+                        height = maxHeight;
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Vrátí komprimovaný obrázek jako Base64
+                    const compressedSrc = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedSrc);
+                };
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+        
+        // Funkce pro zobrazení velikosti v čitelném formátu
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+        
+        // Funkce pro výpočet velikosti Base64 obrázku
+        function calculateBase64Size(base64String) {
+            // Odstranění metadat (např. 'data:image/jpeg;base64,')
+            const base64WithoutPrefix = base64String.substring(base64String.indexOf(',') + 1);
+            // Výpočet velikosti v bajtech
+            return (base64WithoutPrefix.length * 3) / 4;
+        }
+        
         // Náhled obrázku po výběru souboru
         function previewImage(inputId, previewId) {
             var fileInput = document.getElementById(inputId);
             var preview = document.getElementById(previewId);
+            var statusId = inputId.replace('image', 'status');
+            var statusElement = document.getElementById(statusId);
             
             if (fileInput.files && fileInput.files[0]) {
                 var reader = new FileReader();
                 
                 reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = "block";
+                    const originalSrc = e.target.result;
+                    const fileSize = fileInput.files[0].size;
+                    
+                    // Zobrazení informací o velikosti
+                    statusElement.textContent = `Velikost souboru: ${formatBytes(fileSize)}`;
+                    
+                    if (fileSize > MAX_RECOMMENDED_SIZE) {
+                        statusElement.innerHTML += ` <span style="color: red;">(Příliš velký soubor - doporučujeme zmenšit)</span>`;
+                        document.getElementById('sizeWarning').style.display = 'block';
+                    }
+                    
+                    // Pokud je zaškrtnuto automatické komprimování a obrázek je příliš velký
+                    if (document.getElementById('compressImages').checked && fileSize > MAX_RECOMMENDED_SIZE) {
+                        // Komprese obrázku
+                        compressImage(originalSrc, 0.7, 800, 600)
+                            .then(compressedSrc => {
+                                preview.src = compressedSrc;
+                                preview.style.display = "block";
+                                
+                                const compressedSize = calculateBase64Size(compressedSrc);
+                                statusElement.innerHTML += `<br>Komprimovaná velikost: ${formatBytes(compressedSize)}`;
+                                
+                                // Aktualizace celkové velikosti
+                                updateTotalSize();
+                            })
+                            .catch(err => {
+                                console.error("Chyba při kompresi obrázku:", err);
+                                preview.src = originalSrc;
+                                preview.style.display = "block";
+                                
+                                // Aktualizace celkové velikosti
+                                updateTotalSize();
+                            });
+                    } else {
+                        preview.src = originalSrc;
+                        preview.style.display = "block";
+                        
+                        // Aktualizace celkové velikosti
+                        updateTotalSize();
+                    }
                 }
                 
                 reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+        
+        // Aktualizace celkové velikosti obrázků
+        function updateTotalSize() {
+            const napojovyListekPreview = document.getElementById("napojovy_listek_preview");
+            const lineupPreview = document.getElementById("lineup_preview");
+            
+            totalImageSize = 0;
+            
+            if (napojovyListekPreview.style.display !== "none") {
+                totalImageSize += calculateBase64Size(napojovyListekPreview.src);
+            }
+            
+            if (lineupPreview.style.display !== "none") {
+                totalImageSize += calculateBase64Size(lineupPreview.src);
+            }
+            
+            console.log("Celková velikost obrázků:", formatBytes(totalImageSize));
+            
+            // Zobrazení varování, pokud je celková velikost příliš velká
+            if (totalImageSize > 2 * MAX_RECOMMENDED_SIZE) {
+                document.getElementById('sizeWarning').style.display = 'block';
             }
         }
         
@@ -144,52 +284,75 @@
         function generateQR() {
             var napojovyListekPreview = document.getElementById("napojovy_listek_preview");
             var lineupPreview = document.getElementById("lineup_preview");
+            var statusElement = document.getElementById("generateStatus");
             
             // Kontrola, zda byly nahrány oba obrázky
             if (napojovyListekPreview.style.display === "none" || lineupPreview.style.display === "none") {
-                alert("Prosím, nahrajte oba obrázky před generováním QR kódu.");
+                statusElement.innerHTML = `<div class="error">Prosím, nahrajte oba obrázky před generováním QR kódu.</div>`;
                 return;
             }
             
-            // Vytvoření objektu s daty
-            var data = {
-                napojovy_listek_image: napojovyListekPreview.src,
-                lineup_image: lineupPreview.src
-            };
+            statusElement.innerHTML = `<div class="status">Generuji QR kód, prosím čekejte...</div>`;
             
-            // Komprese dat
-            var jsonData = JSON.stringify(data);
-            var compressedData = LZString.compressToEncodedURIComponent(jsonData);
-            
-            // Vytvoření URL s daty
-            var baseUrl = window.location.href.split('?')[0]; // Získání základní URL bez parametrů
-            var url = baseUrl + "?data=" + compressedData;
-            
-            // Nastavení velikosti QR kódu
-            var size = 256;
-            
-            // Vymazání existujícího QR kódu
-            document.getElementById("qrcode").innerHTML = "";
-            
-            // Vytvoření nového QR kódu
-            var qrcode = new QRCode(document.getElementById("qrcode"), {
-                text: url,
-                width: size,
-                height: size,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H // Nejvyšší úroveň korekce chyb
-            });
-            
-            // Zpřístupnění tlačítka pro stažení
-            setTimeout(function() {
-                var qrImage = document.querySelector("#qrcode img");
-                if (qrImage) {
-                    var downloadLink = document.getElementById("downloadLink");
-                    downloadLink.href = qrImage.src;
-                    document.getElementById("downloadContainer").style.display = "block";
+            try {
+                // Vytvoření objektu s daty
+                var data = {
+                    napojovy_listek_image: napojovyListekPreview.src,
+                    lineup_image: lineupPreview.src
+                };
+                
+                console.log("Velikost dat před kompresí:", JSON.stringify(data).length);
+                
+                // Komprese dat
+                var jsonData = JSON.stringify(data);
+                var compressedData = LZString.compressToEncodedURIComponent(jsonData);
+                
+                console.log("Velikost dat po kompresi:", compressedData.length);
+                
+                // Varování, pokud jsou data příliš velká
+                if (compressedData.length > 2000) {
+                    statusElement.innerHTML += `<div class="warning">Upozornění: QR kód obsahuje velké množství dat (${formatBytes(compressedData.length)}). Mohou nastat problémy při skenování.</div>`;
+                } else {
+                    statusElement.innerHTML += `<div class="status">Velikost dat QR kódu: ${formatBytes(compressedData.length)}</div>`;
                 }
-            }, 500);
+                
+                // Vytvoření URL s daty
+                var baseUrl = window.location.href.split('?')[0]; // Získání základní URL bez parametrů
+                var url = baseUrl + "?data=" + compressedData;
+                
+                // Nastavení velikosti QR kódu
+                var size = 256;
+                
+                // Vymazání existujícího QR kódu
+                document.getElementById("qrcode").innerHTML = "";
+                
+                // Vytvoření nového QR kódu
+                var qrcode = new QRCode(document.getElementById("qrcode"), {
+                    text: url,
+                    width: size,
+                    height: size,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H // Nejvyšší úroveň korekce chyb
+                });
+                
+                // Zpřístupnění tlačítka pro stažení
+                setTimeout(function() {
+                    var qrImage = document.querySelector("#qrcode img");
+                    if (qrImage) {
+                        var downloadLink = document.getElementById("downloadLink");
+                        downloadLink.href = qrImage.src;
+                        document.getElementById("downloadContainer").style.display = "block";
+                        statusElement.innerHTML += `<div class="status" style="color: green;">QR kód byl úspěšně vygenerován!</div>`;
+                    } else {
+                        statusElement.innerHTML += `<div class="error">Nepodařilo se vygenerovat QR kód. Zkuste menší obrázky.</div>`;
+                    }
+                }, 500);
+                
+            } catch (e) {
+                console.error("Chyba při generování QR kódu:", e);
+                statusElement.innerHTML = `<div class="error">Došlo k chybě při generování QR kódu: ${e.message}</div>`;
+            }
         }
         
         // Funkce pro kontrolu URL a zobrazení dat
@@ -219,6 +382,7 @@
                         <div class="error">
                             <h2>Chyba při načítání dat</h2>
                             <p>Omlouváme se, ale došlo k chybě při načítání informací. Kontaktujte prosím organizátory festivalu.</p>
+                            <p>Detaily chyby: ${e.message}</p>
                         </div>
                     `;
                 }
