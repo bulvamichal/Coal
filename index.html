@@ -2,96 +2,47 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Generátor QR kódu</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Generátor</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
   <style>
-    input, button {
-      margin: 10px 0;
-      padding: 8px;
-      width: 100%;
-      max-width: 400px;
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
     }
-    #qrcode img {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-top: 10px;
+    input {
+      width: 80%;
+      padding: 0.5rem;
+      margin: 1rem 0;
     }
-    #downloadContainer {
-      margin-top: 10px;
-    }
-    a#downloadLink {
-      background: #4CAF50;
-      color: white;
-      padding: 10px;
-      text-decoration: none;
-      border-radius: 5px;
-      display: inline-block;
+    canvas {
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
-  <h1>Generování QR kódu</h1>
-
-  <label>URL obrázku nápojového lístku:</label>
-  <input type="text" id="napojovy_listek_url" placeholder="https://..." />
-
-  <label>URL obrázku lineup festivalu:</label>
-  <input type="text" id="lineup_url" placeholder="https://..." />
-
-  <button onclick="generateQR()">Generovat QR kód</button>
-
-  <div id="qrcode"></div>
-
-  <div id="downloadContainer" style="display:none;">
-    <a id="downloadLink" download="qr_code.png">Stáhnout QR kód</a>
-  </div>
-
-  <div id="status"></div>
+  <h1>Generátor QR kódů</h1>
+  <input type="text" id="urlInput" placeholder="Zadej URL (např. Google Disk)" />
+  <br />
+  <button onclick="generateQR()">Vygenerovat QR</button>
+  <br />
+  <canvas id="qrCanvas"></canvas>
 
   <script>
     function generateQR() {
-      const napojovyUrl = document.getElementById("napojovy_listek_url").value.trim();
-      const lineupUrl = document.getElementById("lineup_url").value.trim();
-      const status = document.getElementById("status");
-
-      if (!napojovyUrl || !lineupUrl) {
-        status.innerHTML = "<p style='color:red'>Vyplňte prosím obě URL!</p>";
+      const url = document.getElementById('urlInput').value;
+      const canvas = document.getElementById('qrCanvas');
+      if (!url) {
+        alert('Zadej URL!');
         return;
       }
-
-      const data = {
-        napojovy_listek_url: napojovyUrl,
-        lineup_url: lineupUrl
-      };
-
-      const json = JSON.stringify(data);
-      const encoded = encodeURIComponent(json);
-
-      // Získání base URL pro zobrazovací stránku
-      const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/zobraz.html');
-      const finalUrl = `${baseUrl}?data=${encoded}`;
-
-      document.getElementById("qrcode").innerHTML = "";
-
-      const qr = new QRCode(document.getElementById("qrcode"), {
-        text: finalUrl,
-        width: 256,
-        height: 256,
-        colorDark: "#000",
-        colorLight: "#fff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-
-      setTimeout(() => {
-        const qrImage = document.querySelector("#qrcode img");
-        if (qrImage) {
-          const downloadLink = document.getElementById("downloadLink");
-          downloadLink.href = qrImage.src;
-          document.getElementById("downloadContainer").style.display = "block";
-          status.innerHTML = "<p style='color:green'>QR kód byl úspěšně vygenerován!</p>";
+      QRCode.toCanvas(canvas, url, { width: 256 }, function (error) {
+        if (error) {
+          console.error(error);
+          alert('Chyba při generování QR kódu');
         }
-      }, 500);
+      });
     }
   </script>
 </body>
