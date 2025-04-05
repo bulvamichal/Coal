@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>QR kód pro festival</title>
+    <title>QR kód pro festival - GitHub verze</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -34,6 +33,10 @@
             padding: 10px 15px; 
             border: none; 
             cursor: pointer; 
+        }
+        .preview-button {
+            background-color: #007BFF;
+            margin-top: 5px;
         }
         .instructions { 
             margin-top: 30px; 
@@ -66,7 +69,6 @@
             color: white; 
             text-decoration: none; 
         }
-        .viewer-only .generator-element { display: none; }
         .section { margin-bottom: 20px; }
         .section h2 { color: #fff; }
         .image-preview { 
@@ -77,7 +79,6 @@
         }
         .image-container { margin-top: 20px; text-align: center; }
         .image-container img { max-width: 100%; margin-bottom: 20px; }
-        .file-input { margin-bottom: 10px; }
         .warning { 
             background-color: #332b00; 
             color: #ffeb9d;
@@ -116,11 +117,45 @@
         .preview-container {
             margin-bottom: 15px;
         }
+        .info-text {
+            background-color: #002233;
+            color: #00ccff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .github-repo-info {
+            background-color: #113311;
+            color: #aaffaa;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .server-url-info {
+            display: none;
+            padding: 10px;
+            background-color: #333;
+            margin-top: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .repo-form {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #222;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #0a2e0a;
+            color: #88ff88;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #005500;
+        }
     </style>
 </head>
 <body>
     <div id="mainContent">
-        <h1 class="generator-element">QR kód pro festival</h1>
+        <h1 class="generator-element">QR kód pro festival - GitHub verze</h1>
         
         <div class="tab-container generator-element">
             <div class="tab-buttons">
@@ -129,14 +164,50 @@
             </div>
             
             <div id="generator" class="tab-content active">
+                <div class="info-text">
+                    <h3>Informace o GitHub verzi:</h3>
+                    <p>Tato verze generuje QR kód, který odkazuje na tuto stránku s ID vašeho festivalu. 
+                    Všechny obrázky jsou načítány z vašeho GitHub repozitáře.</p>
+                </div>
+                
+                <div class="github-repo-info">
+                    <h3>Nastavení repozitáře</h3>
+                    <p>Pro správné zobrazení obrázků musíte nejdříve nastavit informace o svém GitHub repozitáři.</p>
+                </div>
+                
+                <div class="repo-form">
+                    <div class="form-group">
+                        <label for="github_username">GitHub uživatelské jméno:</label>
+                        <input type="text" id="github_username" placeholder="vas-ucet">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="github_repo">GitHub repozitář:</label>
+                        <input type="text" id="github_repo" placeholder="festival-obrazky">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="github_branch">Branch (větev):</label>
+                        <input type="text" id="github_branch" placeholder="main">
+                    </div>
+
+                    <button onclick="saveGitHubConfig()">Uložit nastavení repozitáře</button>
+                    <div id="githubConfigStatus"></div>
+                </div>
+                
                 <div class="github-instructions">
                     <h3>Instrukce pro nahrání obrázků na GitHub:</h3>
                     <ol>
-                        <li>Nahrajte obrázky do repozitáře na GitHub</li>
-                        <li>Otevřete každý obrázek v režimu "Raw" (klikněte na obrázek a pak na tlačítko "Raw")</li>
-                        <li>Zkopírujte URL adresu z adresního řádku</li>
-                        <li>Vložte URL adresy obrázků do formuláře níže</li>
+                        <li>Nahrajte obrázky do svého GitHub repozitáře</li>
+                        <li>Ujistěte se, že jsou obrázky ve formátu .jpg, .jpeg, .png nebo .gif</li>
+                        <li>Do formuláře níže zadejte pouze názvy souborů (např. "drinks.jpg")</li>
+                        <li>Systém automaticky vytvoří odkazy na "raw" verze obrázků</li>
                     </ol>
+                </div>
+                
+                <div class="form-group">
+                    <label for="festival_id">ID vašeho festivalu (např. "rockfest2025"):</label>
+                    <input type="text" id="festival_id" placeholder="rockfest2025">
                 </div>
                 
                 <!-- Drinks -->
@@ -144,10 +215,10 @@
                     <h3>Drinks</h3>
                 </div>
                 <div class="form-group">
-                    <label for="drinks_url">URL adresa obrázku nápojů:</label>
-                    <input type="text" id="drinks_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/drinks.jpg">
+                    <label for="drinks_filename">Název souboru s nápoji (např. "drinks.jpg"):</label>
+                    <input type="text" id="drinks_filename" placeholder="drinks.jpg">
                     <div>
-                        <button onclick="previewImage('drinks_url', 'drinks_preview')" class="preview-button">Náhled</button>
+                        <button onclick="previewGitHubImage('drinks_filename', 'drinks_preview')" class="preview-button">Náhled</button>
                         <img id="drinks_preview" class="image-preview" style="display:none;">
                     </div>
                 </div>
@@ -157,19 +228,19 @@
                     <h3>Lineup - pátek</h3>
                 </div>
                 <div class="form-group">
-                    <label for="lineup_friday_1_url">URL adresa obrázku 1 (pátek):</label>
-                    <input type="text" id="lineup_friday_1_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-friday-1.jpg">
+                    <label for="lineup_friday_1_filename">Název souboru 1 (pátek):</label>
+                    <input type="text" id="lineup_friday_1_filename" placeholder="lineup-friday-1.jpg">
                     <div>
-                        <button onclick="previewImage('lineup_friday_1_url', 'lineup_friday_1_preview')" class="preview-button">Náhled</button>
+                        <button onclick="previewGitHubImage('lineup_friday_1_filename', 'lineup_friday_1_preview')" class="preview-button">Náhled</button>
                         <img id="lineup_friday_1_preview" class="image-preview" style="display:none;">
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="lineup_friday_2_url">URL adresa obrázku 2 (pátek):</label>
-                    <input type="text" id="lineup_friday_2_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-friday-2.jpg">
+                    <label for="lineup_friday_2_filename">Název souboru 2 (pátek):</label>
+                    <input type="text" id="lineup_friday_2_filename" placeholder="lineup-friday-2.jpg">
                     <div>
-                        <button onclick="previewImage('lineup_friday_2_url', 'lineup_friday_2_preview')" class="preview-button">Náhled</button>
+                        <button onclick="previewGitHubImage('lineup_friday_2_filename', 'lineup_friday_2_preview')" class="preview-button">Náhled</button>
                         <img id="lineup_friday_2_preview" class="image-preview" style="display:none;">
                     </div>
                 </div>
@@ -179,24 +250,24 @@
                     <h3>Lineup - sobota</h3>
                 </div>
                 <div class="form-group">
-                    <label for="lineup_saturday_1_url">URL adresa obrázku 1 (sobota):</label>
-                    <input type="text" id="lineup_saturday_1_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-saturday-1.jpg">
+                    <label for="lineup_saturday_1_filename">Název souboru 1 (sobota):</label>
+                    <input type="text" id="lineup_saturday_1_filename" placeholder="lineup-saturday-1.jpg">
                     <div>
-                        <button onclick="previewImage('lineup_saturday_1_url', 'lineup_saturday_1_preview')" class="preview-button">Náhled</button>
+                        <button onclick="previewGitHubImage('lineup_saturday_1_filename', 'lineup_saturday_1_preview')" class="preview-button">Náhled</button>
                         <img id="lineup_saturday_1_preview" class="image-preview" style="display:none;">
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="lineup_saturday_2_url">URL adresa obrázku 2 (sobota):</label>
-                    <input type="text" id="lineup_saturday_2_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-saturday-2.jpg">
+                    <label for="lineup_saturday_2_filename">Název souboru 2 (sobota):</label>
+                    <input type="text" id="lineup_saturday_2_filename" placeholder="lineup-saturday-2.jpg">
                     <div>
-                        <button onclick="previewImage('lineup_saturday_2_url', 'lineup_saturday_2_preview')" class="preview-button">Náhled</button>
+                        <button onclick="previewGitHubImage('lineup_saturday_2_filename', 'lineup_saturday_2_preview')" class="preview-button">Náhled</button>
                         <img id="lineup_saturday_2_preview" class="image-preview" style="display:none;">
                     </div>
                 </div>
                 
-                <button onclick="generateQR()">Generovat QR kód</button>
+                <button onclick="saveAndGenerateQR()">Uložit data a generovat QR kód</button>
                 <div id="generateStatus"></div>
                 
                 <div class="qr-result">
@@ -209,11 +280,11 @@
                 <div class="instructions">
                     <h2>Návod k použití:</h2>
                     <ol>
-                        <li>Nahrajte obrázky na GitHub</li>
-                        <li>Zkopírujte "Raw" URL adresy obrázků</li>
-                        <li>Vložte URL adresy do formuláře</li>
+                        <li>Nastavte informace o vašem GitHub repozitáři</li>
+                        <li>Vložte unikátní ID vašeho festivalu</li>
+                        <li>Zadejte názvy obrázků, které máte v GitHub repozitáři</li>
                         <li>Klikněte na "Náhled" pro kontrolu zobrazení</li>
-                        <li>Klikněte na tlačítko "Generovat QR kód"</li>
+                        <li>Klikněte na tlačítko "Uložit data a generovat QR kód"</li>
                         <li>Stáhněte si vygenerovaný QR kód</li>
                         <li>Vytiskněte QR kód a umístěte ho do propagačních materiálů</li>
                     </ol>
@@ -235,6 +306,79 @@
     </div>
     
     <script>
+        // Inicializace údajů o GitHub repozitáři z localStorage
+        function initGitHubConfig() {
+            var githubConfig = localStorage.getItem('github_config');
+            if (githubConfig) {
+                var config = JSON.parse(githubConfig);
+                document.getElementById("github_username").value = config.username || '';
+                document.getElementById("github_repo").value = config.repo || '';
+                document.getElementById("github_branch").value = config.branch || 'main';
+            } else {
+                document.getElementById("github_branch").value = 'main'; // výchozí hodnota
+            }
+        }
+        
+        // Uložení konfigurace GitHub repozitáře
+        function saveGitHubConfig() {
+            var username = document.getElementById("github_username").value.trim();
+            var repo = document.getElementById("github_repo").value.trim();
+            var branch = document.getElementById("github_branch").value.trim() || 'main';
+            var statusElement = document.getElementById("githubConfigStatus");
+            
+            if (!username || !repo) {
+                statusElement.innerHTML = `<div class="error">Zadejte uživatelské jméno a název repozitáře.</div>`;
+                return;
+            }
+            
+            var config = {
+                username: username,
+                repo: repo,
+                branch: branch
+            };
+            
+            try {
+                localStorage.setItem('github_config', JSON.stringify(config));
+                statusElement.innerHTML = `<div class="success">Nastavení GitHub repozitáře bylo úspěšně uloženo!</div>`;
+            } catch (e) {
+                statusElement.innerHTML = `<div class="error">Chyba při ukládání nastavení: ${e.message}</div>`;
+            }
+        }
+        
+        // Získání RAW URL adresy pro GitHub obrázek
+        function getGitHubRawUrl(filename) {
+            var githubConfig = localStorage.getItem('github_config');
+            if (!githubConfig) {
+                alert("Nejprve nastavte informace o vašem GitHub repozitáři!");
+                return null;
+            }
+            
+            var config = JSON.parse(githubConfig);
+            return `https://raw.githubusercontent.com/${config.username}/${config.repo}/${config.branch}/${filename}`;
+        }
+        
+        // Náhled obrázku z GitHub podle názvu souboru
+        function previewGitHubImage(inputId, previewId) {
+            var filenameInput = document.getElementById(inputId);
+            var preview = document.getElementById(previewId);
+            var filename = filenameInput.value.trim();
+            
+            if (filename === '') {
+                alert("Zadejte název souboru.");
+                return;
+            }
+            
+            var rawUrl = getGitHubRawUrl(filename);
+            if (rawUrl) {
+                preview.src = rawUrl;
+                preview.style.display = "block";
+                preview.onerror = function() {
+                    alert("Nepodařilo se načíst obrázek. Zkontrolujte název souboru a nastavení repozitáře.");
+                    preview.style.display = "none";
+                };
+            }
+        }
+        
         // Otevření záložky
         function openTab(event, tabName) {
             var i, tabContent, tabButtons;
@@ -261,80 +405,76 @@
             }
         }
         
-        // Náhled obrázku podle URL
-        function previewImage(inputId, previewId) {
-            var urlInput = document.getElementById(inputId);
-            var preview = document.getElementById(previewId);
-            
-            if (urlInput.value.trim() !== '') {
-                // Kontrola platnosti URL
-                if (isValidImageUrl(urlInput.value)) {
-                    preview.src = urlInput.value;
-                    preview.style.display = "block";
-                    preview.onerror = function() {
-                        alert("Nepodařilo se načíst obrázek. Zkontrolujte URL adresu.");
-                        preview.style.display = "none";
-                    };
-                } else {
-                    alert("Zadejte platnou URL adresu obrázku (začínající http:// nebo https://)");
-                }
-            } else {
-                alert("Zadejte URL adresu obrázku");
-            }
+        // Kontrola platnosti názvu obrázku
+        function isValidImageFilename(filename) {
+            return filename.match(/\.(jpg|jpeg|png|gif|webp)$/i) !== null;
         }
         
-        // Kontrola platnosti URL
-        function isValidImageUrl(url) {
-            return url.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i) !== null ||
-                   url.match(/^https?:\/\/raw\.githubusercontent\.com\/.+$/i) !== null;
-        }
-        
-        // Funkce pro generování QR kódu s odkazy
-        function generateQR() {
-            var drinksUrl = document.getElementById("drinks_url").value.trim();
-            var lineupFriday1Url = document.getElementById("lineup_friday_1_url").value.trim();
-            var lineupFriday2Url = document.getElementById("lineup_friday_2_url").value.trim();
-            var lineupSaturday1Url = document.getElementById("lineup_saturday_1_url").value.trim();
-            var lineupSaturday2Url = document.getElementById("lineup_saturday_2_url").value.trim();
+        // Funkce pro uložení dat do localStorage a generování QR kódu
+        function saveAndGenerateQR() {
+            var festivalId = document.getElementById("festival_id").value.trim();
+            var drinksFilename = document.getElementById("drinks_filename").value.trim();
+            var lineupFriday1Filename = document.getElementById("lineup_friday_1_filename").value.trim();
+            var lineupFriday2Filename = document.getElementById("lineup_friday_2_filename").value.trim();
+            var lineupSaturday1Filename = document.getElementById("lineup_saturday_1_filename").value.trim();
+            var lineupSaturday2Filename = document.getElementById("lineup_saturday_2_filename").value.trim();
             var statusElement = document.getElementById("generateStatus");
             
-            // Kontrola, zda byly zadány všechny URL adresy
-            if (drinksUrl === '' || lineupFriday1Url === '' || lineupFriday2Url === '' || 
-                lineupSaturday1Url === '' || lineupSaturday2Url === '') {
-                statusElement.innerHTML = `<div class="error">Prosím, zadejte URL adresy všech obrázků.</div>`;
+            // Kontrola, zda je nastavena konfigurace GitHub
+            var githubConfig = localStorage.getItem('github_config');
+            if (!githubConfig) {
+                statusElement.innerHTML = `<div class="error">Nejprve nastavte informace o vašem GitHub repozitáři!</div>`;
                 return;
             }
             
-            // Kontrola platnosti všech URL adres
-            var allUrls = [drinksUrl, lineupFriday1Url, lineupFriday2Url, lineupSaturday1Url, lineupSaturday2Url];
-            for (var i = 0; i < allUrls.length; i++) {
-                if (!isValidImageUrl(allUrls[i])) {
-                    statusElement.innerHTML = `<div class="error">Zadejte platné URL adresy obrázků.</div>`;
+            // Kontrola ID festivalu
+            if (festivalId === '') {
+                statusElement.innerHTML = `<div class="error">Prosím, zadejte ID vašeho festivalu.</div>`;
+                return;
+            }
+            
+            // Kontrola, zda byly zadány všechny názvy souborů
+            if (drinksFilename === '' || lineupFriday1Filename === '' || lineupFriday2Filename === '' ||
+                lineupSaturday1Filename === '' || lineupSaturday2Filename === '') {
+                statusElement.innerHTML = `<div class="error">Prosím, zadejte názvy všech souborů.</div>`;
+                return;
+            }
+            
+            // Kontrola platnosti všech názvů souborů
+            var allFilenames = [drinksFilename, lineupFriday1Filename, lineupFriday2Filename, 
+                              lineupSaturday1Filename, lineupSaturday2Filename];
+            for (var i = 0; i < allFilenames.length; i++) {
+                if (!isValidImageFilename(allFilenames[i])) {
+                    statusElement.innerHTML = `<div class="error">Soubor "${allFilenames[i]}" nemá platnou příponu obrázku (.jpg, .jpeg, .png, .gif nebo .webp).</div>`;
                     return;
                 }
             }
             
-            statusElement.innerHTML = `<div class="status">Generuji QR kód, prosím čekejte...</div>`;
+            statusElement.innerHTML = `<div class="status">Ukládám data a generuji QR kód, prosím čekejte...</div>`;
             
             try {
-                // Vytvoření objektu s daty - pouze odkazy místo celých obrázků
+                // Vytvoření objektu s daty - ukládáme pouze názvy souborů a konfiguraci repozitáře
+                var config = JSON.parse(githubConfig);
                 var data = {
-                    drinks_url: drinksUrl,
-                    lineup_friday_1_url: lineupFriday1Url,
-                    lineup_friday_2_url: lineupFriday2Url,
-                    lineup_saturday_1_url: lineupSaturday1Url,
-                    lineup_saturday_2_url: lineupSaturday2Url
+                    festival_id: festivalId,
+                    github: {
+                        username: config.username,
+                        repo: config.repo,
+                        branch: config.branch
+                    },
+                    drinks_filename: drinksFilename,
+                    lineup_friday_1_filename: lineupFriday1Filename,
+                    lineup_friday_2_filename: lineupFriday2Filename,
+                    lineup_saturday_1_filename: lineupSaturday1Filename,
+                    lineup_saturday_2_filename: lineupSaturday2Filename
                 };
                 
-                // Komprese dat
-                var jsonData = JSON.stringify(data);
-                var compressedData = LZString.compressToEncodedURIComponent(jsonData);
+                // Uložení dat do localStorage
+                localStorage.setItem('festival_' + festivalId, JSON.stringify(data));
                 
-                console.log("Velikost dat po kompresi:", compressedData.length);
-                
-                // Vytvoření URL s daty
+                // Vytvoření URL s ID festivalu
                 var baseUrl = window.location.href.split('?')[0]; // Získání základní URL bez parametrů
-                var url = baseUrl + "?data=" + compressedData;
+                var url = baseUrl + "?id=" + encodeURIComponent(festivalId);
                 
                 // Nastavení velikosti QR kódu
                 var size = 256;
@@ -360,7 +500,7 @@
                             var downloadLink = document.getElementById("downloadLink");
                             downloadLink.href = qrImage.src;
                             document.getElementById("downloadContainer").style.display = "block";
-                            statusElement.innerHTML = `<div class="status" style="color: green;">QR kód byl úspěšně vygenerován!</div>`;
+                            statusElement.innerHTML = `<div class="success">Data byla uložena a QR kód byl úspěšně vygenerován!</div>`;
                         } else {
                             statusElement.innerHTML = `<div class="error">Nepodařilo se vygenerovat QR kód.</div>`;
                         }
@@ -379,31 +519,55 @@
         // Funkce pro kontrolu URL a zobrazení dat
         function checkUrlForData() {
             var urlParams = new URLSearchParams(window.location.search);
-            var compressedData = urlParams.get('data');
+            var festivalId = urlParams.get('id');
             
-            if (compressedData) {
+            if (festivalId) {
                 try {
-                    // Dekomprese dat
-                    var jsonData = LZString.decompressFromEncodedURIComponent(compressedData);
-                    var data = JSON.parse(jsonData);
+                    // Načtení dat z localStorage podle ID festivalu
+                    var storedData = localStorage.getItem('festival_' + festivalId);
                     
-                    // Zobrazení dat na stránce v režimu viewer - načítáme odkazy na obrázky
-                    document.getElementById("mainContent").innerHTML = `
-                        <div class="image-container">
-                            <h2>Drinks</h2>
-                            <img src="${data.drinks_url}" alt="Nápojový lístek" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek s nápoji.');">
-                            
-                            <h2>Lineup - pátek</h2>
-                            <img src="${data.lineup_friday_1_url}" alt="Lineup pátek 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 1.');">
-                            <img src="${data.lineup_friday_2_url}" alt="Lineup pátek 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 2.');">
-                            
-                            <h2>Lineup - sobota</h2>
-                            <img src="${data.lineup_saturday_1_url}" alt="Lineup sobota 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 1.');">
-                            <img src="${data.lineup_saturday_2_url}" alt="Lineup sobota 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 2.');">
-                        </div>
-                    `;
+                    if (storedData) {
+                        var data = JSON.parse(storedData);
+                        
+                        // Vytvoření RAW URL adres pro všechny obrázky
+                        var githubUsername = data.github.username;
+                        var githubRepo = data.github.repo;
+                        var githubBranch = data.github.branch || 'main';
+                        var baseUrl = `https://raw.githubusercontent.com/${githubUsername}/${githubRepo}/${githubBranch}/`;
+                        
+                        var drinksUrl = baseUrl + data.drinks_filename;
+                        var lineupFriday1Url = baseUrl + data.lineup_friday_1_filename;
+                        var lineupFriday2Url = baseUrl + data.lineup_friday_2_filename;
+                        var lineupSaturday1Url = baseUrl + data.lineup_saturday_1_filename;
+                        var lineupSaturday2Url = baseUrl + data.lineup_saturday_2_filename;
+                        
+                        // Zobrazení dat na stránce v režimu viewer
+                        document.getElementById("mainContent").innerHTML = `
+                            <div class="image-container">
+                                <h1>Festival: ${data.festival_id}</h1>
+                                <h2>Drinks</h2>
+                                <img src="${drinksUrl}" alt="Nápojový lístek" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek s nápoji.');">
+                                
+                                <h2>Lineup - pátek</h2>
+                                <img src="${lineupFriday1Url}" alt="Lineup pátek 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 1.');">
+                                <img src="${lineupFriday2Url}" alt="Lineup pátek 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 2.');">
+                                
+                                <h2>Lineup - sobota</h2>
+                                <img src="${lineupSaturday1Url}" alt="Lineup sobota 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 1.');">
+                                <img src="${lineupSaturday2Url}" alt="Lineup sobota 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 2.');">
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById("mainContent").innerHTML = `
+                            <div class="error">
+                                <h2>Data pro festival nebyla nalezena</h2>
+                                <p>Omlouváme se, ale informace o festivalu "${festivalId}" nejsou k dispozici v tomto prohlížeči.</p>
+                                <p>Možná jste naskenovali QR kód na jiném zařízení, než na kterém byl vytvořen.</p>
+                            </div>
+                        `;
+                    }
                 } catch (e) {
-                    console.error("Chyba při parsování dat:", e);
+                    console.error("Chyba při načítání dat:", e);
                     document.getElementById("mainContent").innerHTML = `
                         <div class="error">
                             <h2>Chyba při načítání dat</h2>
@@ -415,8 +579,9 @@
             }
         }
         
-        // Kontrola URL při načtení stránky
+        // Kontrola URL při načtení stránky a inicializace GitHub konfigurace
         window.onload = function() {
+            initGitHubConfig();
             checkUrlForData();
         };
     </script>
