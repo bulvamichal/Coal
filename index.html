@@ -137,8 +137,8 @@
             <div id="generator" class="tab-content active">
                 <div class="info-text">
                     <h3>Informace o GitHub verzi:</h3>
-                    <p>Tato verze generuje QR kód s odkazem na tuto stránku s vaším ID festivalu. 
-                    Místo ukládání obrázků do lokálního úložiště prohlížeče, používáme odkazy na obrázky nahrané na GitHub.</p>
+                    <p>Tato verze generuje QR kód s odkazem na tuto stránku s daty vašeho festivalu.
+                    Všechna data jsou uložena přímo v URL adrese, takže QR kód bude fungovat na všech zařízeních.</p>
                 </div>
             
                 <div class="github-instructions">
@@ -341,7 +341,22 @@
                    url.match(/^https?:\/\/raw\.githubusercontent\.com\/.+$/i) !== null;
         }
         
-        // Funkce pro generování QR kódu s odkazem na stránku s ID festivalu
+        // Funkce pro kódování dat do Base64
+        function encodeDataToBase64(data) {
+            return btoa(JSON.stringify(data));
+        }
+        
+        // Funkce pro dekódování dat z Base64
+        function decodeDataFromBase64(base64) {
+            try {
+                return JSON.parse(atob(base64));
+            } catch (e) {
+                console.error("Chyba při dekódování dat:", e);
+                return null;
+            }
+        }
+        
+        // Funkce pro generování QR kódu s odkazem na stránku s enkódovanými daty
         function saveAndGenerateQR() {
             var festivalId = document.getElementById("festival_id").value.trim();
             var githubRepo = document.getElementById("github_repo").value.trim();
@@ -395,13 +410,16 @@
                     created_at: new Date().toISOString()
                 };
                 
-                // Uložení dat do databáze a localStorage
+                // Uložení dat do databáze a localStorage (pro možnost editace později)
                 festivalDatabase[festivalId] = data;
                 saveFestivalDatabase();
                 
-                // Vytvoření URL s ID festivalu
+                // Zakódování dat do Base64
+                var encodedData = encodeDataToBase64(data);
+                
+                // Vytvoření URL s enkódovanými daty
                 var baseUrl = window.location.href.split('?')[0]; // Získání základní URL bez parametrů
-                var url = baseUrl + "?id=" + encodeURIComponent(festivalId);
+                var url = baseUrl + "?data=" + encodeURIComponent(encodedData);
                 
                 // Nastavení velikosti QR kódu
                 var size = 256;
@@ -410,7 +428,7 @@
                 document.getElementById("qrcode").innerHTML = "";
                 
                 try {
-                    // Vytvoření nového QR kódu s odkazem na stránku s ID festivalu
+                    // Vytvoření nového QR kódu s odkazem na stránku s enkódovanými daty
                     new QRCode(document.getElementById("qrcode"), {
                         text: url,
                         width: size,
@@ -446,15 +464,57 @@
         // Funkce pro kontrolu URL a zobrazení dat
         function checkUrlForData() {
             var urlParams = new URLSearchParams(window.location.search);
-            var festivalId = urlParams.get('id');
+            var encodedData = urlParams.get('data');
+            var oldFestivalId = urlParams.get('id'); // Pro zpětnou kompatibilitu
             
-            if (festivalId) {
+            if (encodedData) {
+                try {
+                    // Dekódování dat z Base64
+                    var data = decodeDataFromBase64(encodedData);
+                    
+                    if (data && data.festival_id) {
+                        // Zobrazení dat na stránce
+                        document.getElementById("mainContent").innerHTML = `
+                            <div class="image-container">
+                                <h1>Festival: ${data.festival_id}</h1>
+                                <h2>Drinks</h2>
+                                <img src="${data.drinks_url}" alt="Nápojový lístek" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek s nápoji.');">
+                                
+                                <h2>Lineup - pátek</h2>
+                                <img src="${data.lineup_friday_1_url}" alt="Lineup pátek 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 1.');">
+                                <img src="${data.lineup_friday_2_url}" alt="Lineup pátek 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 2.');">
+                                
+                                <h2>Lineup - sobota</h2>
+                                <img src="${data.lineup_saturday_1_url}" alt="Lineup sobota 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 1.');">
+                                <img src="${data.lineup_saturday_2_url}" alt="Lineup sobota 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 2.');">
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById("mainContent").innerHTML = `
+                            <div class="error">
+                                <h2>Data pro festival nebyla správně načtena</h2>
+                                <p>Omlouváme se, ale informace o festivalu nejsou k dispozici v kódu QR.</p>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    console.error("Chyba při načítání dat:", e);
+                    document.getElementById("mainContent").innerHTML = `
+                        <div class="error">
+                            <h2>Chyba při načítání dat</h2>
+                            <p>Omlouváme se, ale došlo k chybě při načítání informací. Kontaktujte prosím organizátory festivalu.</p>
+                            <p>Detaily chyby: ${e.message}</p>
+                        </div>
+                    `;
+                }
+            } else if (oldFestivalId) {
+                // Starý formát - kontrola v localStorage (pro zpětnou kompatibilitu)
                 try {
                     // Načtení dat z databáze podle ID festivalu
-                    if (festivalDatabase[festivalId]) {
-                        var data = festivalDatabase[festivalId];
+                    if (festivalDatabase[oldFestivalId]) {
+                        var data = festivalDatabase[oldFestivalId];
                         
-                        // Zobrazení dat na stránce v režimu viewer - načítáme odkazy na obrázky z GitHubu
+                        // Zobrazení dat na stránce
                         document.getElementById("mainContent").innerHTML = `
                             <div class="image-container">
                                 <h1>Festival: ${data.festival_id}</h1>
@@ -474,9 +534,8 @@
                         document.getElementById("mainContent").innerHTML = `
                             <div class="error">
                                 <h2>Data pro festival nebyla nalezena</h2>
-                                <p>Omlouváme se, ale informace o festivalu "${festivalId}" nejsou k dispozici v tomto prohlížeči.</p>
-                                <p>Možná jste naskenovali QR kód na jiném zařízení, než na kterém byl vytvořen,
-                                nebo data byla smazána.</p>
+                                <p>Omlouváme se, ale informace o festivalu "${oldFestivalId}" nejsou k dispozici v tomto prohlížeči.</p>
+                                <p>Tento QR kód byl vytvořen ve starší verzi aplikace, která ukládala data lokálně. Použijte prosím novou verzi aplikace pro zobrazení dat na všech zařízeních.</p>
                             </div>
                         `;
                     }
