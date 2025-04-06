@@ -1,60 +1,424 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QR Viewer</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #000;
-      color: #fff;
-      padding: 20px;
-      text-align: center;
-    }
-    h2 {
-      margin-top: 40px;
-    }
-    img {
-      max-width: 90%;
-      height: auto;
-      margin: 10px 0;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-    }
-  </style>
+    <title>QR kód pro festival</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] { 
+            width: 100%; 
+            padding: 8px; 
+            box-sizing: border-box;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+        }
+        .qr-result { margin-top: 30px; text-align: center; }
+        #qrcode { margin: 20px auto; }
+        #qrcode img { margin: 0 auto; }
+        button { 
+            background-color: #4CAF50; 
+            color: white; 
+            padding: 10px 15px; 
+            border: none; 
+            cursor: pointer; 
+        }
+        .instructions { 
+            margin-top: 30px; 
+            border-top: 1px solid #444; 
+            padding-top: 20px; 
+        }
+        .tab-container { margin-top: 20px; }
+        .tab-buttons { display: flex; }
+        .tab-button { 
+            padding: 10px 15px; 
+            background-color: #333; 
+            color: #fff;
+            border: none; 
+            cursor: pointer; 
+            margin-right: 2px; 
+        }
+        .tab-button.active { background-color: #4CAF50; color: white; }
+        .tab-content { 
+            display: none; 
+            padding: 20px; 
+            border: 1px solid #444;
+            background-color: #111;
+        }
+        .tab-content.active { display: block; }
+        .download-link { 
+            display: inline-block; 
+            margin-top: 10px; 
+            padding: 8px 15px; 
+            background-color: #007BFF; 
+            color: white; 
+            text-decoration: none; 
+        }
+        .viewer-only .generator-element { display: none; }
+        .section { margin-bottom: 20px; }
+        .section h2 { color: #fff; }
+        .image-preview { 
+            max-width: 300px; 
+            max-height: 200px; 
+            margin: 10px 0; 
+            border: 1px solid #444; 
+        }
+        .image-container { margin-top: 20px; text-align: center; }
+        .image-container img { max-width: 100%; margin-bottom: 20px; }
+        .file-input { margin-bottom: 10px; }
+        .warning { 
+            background-color: #332b00; 
+            color: #ffeb9d;
+            padding: 10px; 
+            margin: 10px 0; 
+            border: 1px solid #665500; 
+        }
+        .error { 
+            background-color: #350000; 
+            color: #ffb3b3;
+            padding: 10px; 
+            margin: 10px 0; 
+            border: 1px solid #660000; 
+        }
+        .status { margin-top: 10px; padding: 5px; border-radius: 3px; }
+        .options { margin-top: 15px; border-top: 1px solid #444; padding-top: 15px; }
+        .github-instructions { 
+            background-color: #001a22; 
+            color: #b3e0f2;
+            padding: 15px; 
+            margin-bottom: 20px; 
+            border-radius: 5px; 
+        }
+        h1, h2, h3 { color: #ffffff; }
+        .section-title {
+            background-color: #222;
+            padding: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+        .preview-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .preview-container {
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-  <h2>Drinks</h2>
-  <img id=1"drinks" alt="Drinks" />
-
-  <h2>Lineup Pátek</h2>
-  <img id=2"friday1" alt="Lineup Pátek 1" />
-  <img id=3"friday2" alt="Lineup Pátek 2" />
-
-  <h2>Lineup Sobota</h2>
-  <img id=4"saturday1" alt="Lineup Sobota 1" />
-  <img id=5"saturday2" alt="Lineup Sobota 2" />
-
-  <script>
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
-    }
-
-    const id = getQueryParam("id");
-
-    if (id) {
-      const baseURL = `https://raw.githubusercontent.com/bulvamichal/Coal/396a53951c379bc5dbca0b26accaee14698baa37/images/${id}`;
-
-      document.getElementById("drinks").src = `${baseURL}_drinks.jpg`;
-      document.getElementById("friday1").src = `${baseURL}_friday1.jpg`;
-      document.getElementById("friday2").src = `${baseURL}_friday2.jpg`;
-      document.getElementById("saturday1").src = `${baseURL}_saturday1.jpg`;
-      document.getElementById("saturday2").src = `${baseURL}_saturday2.jpg`;
-    } else {
-      document.body.innerHTML = "<p style='color:red;'>Chybí parametr ?id=vaseID v URL.</p>";
-    }
-  </script>
+    <div id="mainContent">
+        <h1 class="generator-element">QR kód pro festival</h1>
+        
+        <div class="tab-container generator-element">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="openTab(event, 'generator')">Generátor QR kódu</button>
+                <button class="tab-button" onclick="openTab(event, 'viewer')">Zobrazení informací</button>
+            </div>
+            
+            <div id="generator" class="tab-content active">
+                <div class="github-instructions">
+                    <h3>Instrukce pro nahrání obrázků na GitHub:</h3>
+                    <ol>
+                        <li>Nahrajte obrázky do repozitáře na GitHub</li>
+                        <li>Otevřete každý obrázek v režimu "Raw" (klikněte na obrázek a pak na tlačítko "Raw")</li>
+                        <li>Zkopírujte URL adresu z adresního řádku</li>
+                        <li>Vložte URL adresy obrázků do formuláře níže</li>
+                    </ol>
+                </div>
+                
+                <!-- Drinks -->
+                <div class="section-title">
+                    <h3>Drinks</h3>
+                </div>
+                <div class="form-group">
+                    <label for="drinks_url">URL adresa obrázku nápojů:</label>
+                    <input type="text" id="drinks_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/drinks.jpg">
+                    <div>
+                        <button onclick="previewImage('drinks_url', 'drinks_preview')" class="preview-button">Náhled</button>
+                        <img id="drinks_preview" class="image-preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <!-- Lineup - pátek -->
+                <div class="section-title">
+                    <h3>Lineup - pátek</h3>
+                </div>
+                <div class="form-group">
+                    <label for="lineup_friday_1_url">URL adresa obrázku 1 (pátek):</label>
+                    <input type="text" id="lineup_friday_1_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-friday-1.jpg">
+                    <div>
+                        <button onclick="previewImage('lineup_friday_1_url', 'lineup_friday_1_preview')" class="preview-button">Náhled</button>
+                        <img id="lineup_friday_1_preview" class="image-preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lineup_friday_2_url">URL adresa obrázku 2 (pátek):</label>
+                    <input type="text" id="lineup_friday_2_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-friday-2.jpg">
+                    <div>
+                        <button onclick="previewImage('lineup_friday_2_url', 'lineup_friday_2_preview')" class="preview-button">Náhled</button>
+                        <img id="lineup_friday_2_preview" class="image-preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <!-- Lineup - sobota -->
+                <div class="section-title">
+                    <h3>Lineup - sobota</h3>
+                </div>
+                <div class="form-group">
+                    <label for="lineup_saturday_1_url">URL adresa obrázku 1 (sobota):</label>
+                    <input type="text" id="lineup_saturday_1_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-saturday-1.jpg">
+                    <div>
+                        <button onclick="previewImage('lineup_saturday_1_url', 'lineup_saturday_1_preview')" class="preview-button">Náhled</button>
+                        <img id="lineup_saturday_1_preview" class="image-preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lineup_saturday_2_url">URL adresa obrázku 2 (sobota):</label>
+                    <input type="text" id="lineup_saturday_2_url" placeholder="https://raw.githubusercontent.com/vas-ucet/nazev-repozitare/main/lineup-saturday-2.jpg">
+                    <div>
+                        <button onclick="previewImage('lineup_saturday_2_url', 'lineup_saturday_2_preview')" class="preview-button">Náhled</button>
+                        <img id="lineup_saturday_2_preview" class="image-preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <button onclick="generateQR()">Generovat QR kód</button>
+                <div id="generateStatus"></div>
+                
+                <div class="qr-result">
+                    <div id="qrcode"></div>
+                    <div id="downloadContainer" style="display:none;">
+                        <a id="downloadLink" href="#" download="festival_qr.png" class="download-link">Stáhnout QR kód</a>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h2>Návod k použití:</h2>
+                    <ol>
+                        <li>Nahrajte obrázky na GitHub</li>
+                        <li>Zkopírujte "Raw" URL adresy obrázků</li>
+                        <li>Vložte URL adresy do formuláře</li>
+                        <li>Klikněte na "Náhled" pro kontrolu zobrazení</li>
+                        <li>Klikněte na tlačítko "Generovat QR kód"</li>
+                        <li>Stáhněte si vygenerovaný QR kód</li>
+                        <li>Vytiskněte QR kód a umístěte ho do propagačních materiálů</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div id="viewer" class="tab-content">
+                <h2>Informace o festivalu</h2>
+                <div id="viewerContent">
+                    <p>Pokud jste sem přišli ze skenu QR kódu, informace by se měly automaticky zobrazit.</p>
+                    <p>Pokud nevidíte žádné informace, kontaktujte organizátory festivalu.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="festivalInfo" style="display:none;">
+            <div id="festivalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Otevření záložky
+        function openTab(event, tabName) {
+            var i, tabContent, tabButtons;
+            
+            // Skrytí všech záložek
+            tabContent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabContent.length; i++) {
+                tabContent[i].classList.remove("active");
+            }
+            
+            // Odstranění aktivní třídy ze všech tlačítek
+            tabButtons = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove("active");
+            }
+            
+            // Zobrazení vybrané záložky a označení tlačítka jako aktivní
+            document.getElementById(tabName).classList.add("active");
+            event.currentTarget.classList.add("active");
+            
+            // Pokud je otevřena záložka pro prohlížení, zkontrolujeme URL parametry
+            if (tabName === 'viewer') {
+                checkUrlForData();
+            }
+        }
+        
+        // Náhled obrázku podle URL
+        function previewImage(inputId, previewId) {
+            var urlInput = document.getElementById(inputId);
+            var preview = document.getElementById(previewId);
+            
+            if (urlInput.value.trim() !== '') {
+                // Kontrola platnosti URL
+                if (isValidImageUrl(urlInput.value)) {
+                    preview.src = urlInput.value;
+                    preview.style.display = "block";
+                    preview.onerror = function() {
+                        alert("Nepodařilo se načíst obrázek. Zkontrolujte URL adresu.");
+                        preview.style.display = "none";
+                    };
+                } else {
+                    alert("Zadejte platnou URL adresu obrázku (začínající http:// nebo https://)");
+                }
+            } else {
+                alert("Zadejte URL adresu obrázku");
+            }
+        }
+        
+        // Kontrola platnosti URL
+        function isValidImageUrl(url) {
+            return url.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i) !== null ||
+                   url.match(/^https?:\/\/raw\.githubusercontent\.com\/.+$/i) !== null;
+        }
+        
+        // Funkce pro generování QR kódu s odkazy
+        function generateQR() {
+            var drinksUrl = document.getElementById("drinks_url").value.trim();
+            var lineupFriday1Url = document.getElementById("lineup_friday_1_url").value.trim();
+            var lineupFriday2Url = document.getElementById("lineup_friday_2_url").value.trim();
+            var lineupSaturday1Url = document.getElementById("lineup_saturday_1_url").value.trim();
+            var lineupSaturday2Url = document.getElementById("lineup_saturday_2_url").value.trim();
+            var statusElement = document.getElementById("generateStatus");
+            
+            // Kontrola, zda byly zadány všechny URL adresy
+            if (drinksUrl === '' || lineupFriday1Url === '' || lineupFriday2Url === '' || 
+                lineupSaturday1Url === '' || lineupSaturday2Url === '') {
+                statusElement.innerHTML = `<div class="error">Prosím, zadejte URL adresy všech obrázků.</div>`;
+                return;
+            }
+            
+            // Kontrola platnosti všech URL adres
+            var allUrls = [drinksUrl, lineupFriday1Url, lineupFriday2Url, lineupSaturday1Url, lineupSaturday2Url];
+            for (var i = 0; i < allUrls.length; i++) {
+                if (!isValidImageUrl(allUrls[i])) {
+                    statusElement.innerHTML = `<div class="error">Zadejte platné URL adresy obrázků.</div>`;
+                    return;
+                }
+            }
+            
+            statusElement.innerHTML = `<div class="status">Generuji QR kód, prosím čekejte...</div>`;
+            
+            try {
+                // Vytvoření objektu s daty - pouze odkazy místo celých obrázků
+                var data = {
+                    drinks_url: drinksUrl,
+                    lineup_friday_1_url: lineupFriday1Url,
+                    lineup_friday_2_url: lineupFriday2Url,
+                    lineup_saturday_1_url: lineupSaturday1Url,
+                    lineup_saturday_2_url: lineupSaturday2Url
+                };
+                
+                // Komprese dat
+                var jsonData = JSON.stringify(data);
+                var compressedData = LZString.compressToEncodedURIComponent(jsonData);
+                
+                console.log("Velikost dat po kompresi:", compressedData.length);
+                
+                // Vytvoření URL s daty
+                var baseUrl = window.location.href.split('?')[0]; // Získání základní URL bez parametrů
+                var url = baseUrl + "?data=" + compressedData;
+                
+                // Nastavení velikosti QR kódu
+                var size = 256;
+                
+                // Vymazání existujícího QR kódu
+                document.getElementById("qrcode").innerHTML = "";
+                
+                try {
+                    // Vytvoření nového QR kódu
+                    new QRCode(document.getElementById("qrcode"), {
+                        text: url,
+                        width: size,
+                        height: size,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H // Nejvyšší úroveň korekce chyb
+                    });
+                    
+                    // Zpřístupnění tlačítka pro stažení
+                    setTimeout(function() {
+                        var qrImage = document.querySelector("#qrcode img");
+                        if (qrImage) {
+                            var downloadLink = document.getElementById("downloadLink");
+                            downloadLink.href = qrImage.src;
+                            document.getElementById("downloadContainer").style.display = "block";
+                            statusElement.innerHTML = `<div class="status" style="color: green;">QR kód byl úspěšně vygenerován!</div>`;
+                        } else {
+                            statusElement.innerHTML = `<div class="error">Nepodařilo se vygenerovat QR kód.</div>`;
+                        }
+                    }, 500);
+                } catch (e) {
+                    console.error("Chyba při vytváření QR kódu:", e);
+                    statusElement.innerHTML = `<div class="error">Chyba při vytváření QR kódu: ${e.message}</div>`;
+                }
+                
+            } catch (e) {
+                console.error("Chyba při generování QR kódu:", e);
+                statusElement.innerHTML = `<div class="error">Došlo k chybě při generování QR kódu: ${e.message}</div>`;
+            }
+        }
+        
+        // Funkce pro kontrolu URL a zobrazení dat
+        function checkUrlForData() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var compressedData = urlParams.get('data');
+            
+            if (compressedData) {
+                try {
+                    // Dekomprese dat
+                    var jsonData = LZString.decompressFromEncodedURIComponent(compressedData);
+                    var data = JSON.parse(jsonData);
+                    
+                    // Zobrazení dat na stránce v režimu viewer - načítáme odkazy na obrázky
+                    document.getElementById("mainContent").innerHTML = `
+                        <div class="image-container">
+                            <h2>Drinks</h2>
+                            <img src="${data.drinks_url}" alt="Nápojový lístek" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek s nápoji.');">
+                            
+                            <h2>Lineup - pátek</h2>
+                            <img src="${data.lineup_friday_1_url}" alt="Lineup pátek 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 1.');">
+                            <img src="${data.lineup_friday_2_url}" alt="Lineup pátek 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup pátek 2.');">
+                            
+                            <h2>Lineup - sobota</h2>
+                            <img src="${data.lineup_saturday_1_url}" alt="Lineup sobota 1" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 1.');">
+                            <img src="${data.lineup_saturday_2_url}" alt="Lineup sobota 2" onerror="this.onerror=null; this.src=''; alert('Nepodařilo se načíst obrázek lineup sobota 2.');">
+                        </div>
+                    `;
+                } catch (e) {
+                    console.error("Chyba při parsování dat:", e);
+                    document.getElementById("mainContent").innerHTML = `
+                        <div class="error">
+                            <h2>Chyba při načítání dat</h2>
+                            <p>Omlouváme se, ale došlo k chybě při načítání informací. Kontaktujte prosím organizátory festivalu.</p>
+                            <p>Detaily chyby: ${e.message}</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // Kontrola URL při načtení stránky
+        window.onload = function() {
+            checkUrlForData();
+        };
+    </script>
 </body>
 </html>
